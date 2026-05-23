@@ -1,49 +1,15 @@
-import { useEffect, useState } from 'react';
-
-export default function Garagem() {
-    const [userRole, setUserRole] = useState('user');
-    const [userName, setUserName] = useState('');
-
-    useEffect(() => {
-        // Pega as informações do usuário assim que a tela carrega
-        const role = localStorage.getItem('userRole');
-        const name = localStorage.getItem('userName');
-        if (role) setUserRole(role);
-        if (name) setUserName(name);
-    }, []);
-
-    return (
-        <div className="min-h-screen bg-zinc-950 text-white p-8">
-            {/* Header da Garagem */}
-            <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
-                <div>
-                    <h1 className="text-3xl font-bold">MotoTrack</h1>
-                    <p className="text-zinc-400">Olá, {userName} ({userRole === 'admin' ? 'Administrador' : 'Piloto'})</p>
-                </div>
-                
-                {/* BOTÃO EXCLUSIVO DO ADM APARECE AQUI */}
-                {userRole === 'admin' && (
-                    <button 
-                        onClick={() => window.location.href = '/admin/oficinas'}
-                        className="bg-lime-500 hover:bg-lime-600 text-black font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
-                    >
-                        🔧 Painel de Oficinas ADM
-                    </button>
-                )}
-            </div>
-
-            {/* O restante do seu código da garagem (Lista de motos, etc) continua aqui igualzinho... */}
-        </div>
-    );
-}
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Garagem() {
   const router = useRouter();
   
+  // States de Usuário / Admin
+  const [userRole, setUserRole] = useState('user');
+  const [userName, setUserName] = useState('');
+
   // States principais das Motos
   const [motos, setMotos] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -95,6 +61,13 @@ export default function Garagem() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { router.push("/"); return; }
+
+    // Pega as informações do usuário assim que a tela carrega
+    const role = localStorage.getItem('userRole');
+    const name = localStorage.getItem('userName');
+    if (role) setUserRole(role);
+    if (name) setUserName(name);
+
     buscarMotos();
   }, [router]);
 
@@ -121,6 +94,8 @@ export default function Garagem() {
 
   const handleSair = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userName");
     router.push("/");
   };
 
@@ -294,15 +269,30 @@ export default function Garagem() {
     <div className="min-h-screen bg-zinc-950 p-6 text-white">
       <div className="max-w-4xl mx-auto">
         
-        {/* Cabeçalho */}
+        {/* Cabeçalho Atualizado com lógica de ADMIN */}
         <div className="flex justify-between items-center bg-zinc-900 p-6 rounded-xl border border-zinc-800 shadow-lg mb-6">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight">MotoTrack</h1>
-            <p className="text-zinc-400 text-sm mt-1">Gerenciamento Full-Stack de Garagem</p>
+            <p className="text-zinc-400 text-sm mt-1">
+              Olá, {userName} ({userRole === 'admin' ? 'Administrador' : 'Piloto'})
+            </p>
           </div>
-          <button onClick={handleSair} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-2 px-4 rounded-lg text-sm transition-colors">
-            Sair
-          </button>
+          
+          <div className="flex items-center gap-4">
+            {/* BOTÃO EXCLUSIVO DO ADM */}
+            {userRole === 'admin' && (
+                <button 
+                    onClick={() => router.push('/admin/oficinas')}
+                    className="bg-lime-500 hover:bg-lime-600 text-black font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-sm shadow-lg shadow-lime-500/20"
+                >
+                    🔧 Painel de Oficinas ADM
+                </button>
+            )}
+            
+            <button onClick={handleSair} className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 py-2 px-4 rounded-lg text-sm transition-colors">
+              Sair
+            </button>
+          </div>
         </div>
 
         {erro && <div className="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 text-sm p-4 rounded-lg mb-6 text-center font-medium">⚠️ {erro}</div>}
