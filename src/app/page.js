@@ -49,6 +49,8 @@ export default function Home() {
         if (isLogin) {
           // Login com sucesso: guarda o token e vai para a garagem
           localStorage.setItem("token", dados.token);
+          localStorage.setItem('userRole', dados.user.role); 
+          localStorage.setItem('userName', dados.user.nome);
           router.push("/garagem");
         } else {
           // Cadastro com sucesso: limpa o formulário e volta para a tela de login

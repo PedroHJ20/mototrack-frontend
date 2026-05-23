@@ -1,3 +1,41 @@
+import { useEffect, useState } from 'react';
+
+export default function Garagem() {
+    const [userRole, setUserRole] = useState('user');
+    const [userName, setUserName] = useState('');
+
+    useEffect(() => {
+        // Pega as informações do usuário assim que a tela carrega
+        const role = localStorage.getItem('userRole');
+        const name = localStorage.getItem('userName');
+        if (role) setUserRole(role);
+        if (name) setUserName(name);
+    }, []);
+
+    return (
+        <div className="min-h-screen bg-zinc-950 text-white p-8">
+            {/* Header da Garagem */}
+            <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
+                <div>
+                    <h1 className="text-3xl font-bold">MotoTrack</h1>
+                    <p className="text-zinc-400">Olá, {userName} ({userRole === 'admin' ? 'Administrador' : 'Piloto'})</p>
+                </div>
+                
+                {/* BOTÃO EXCLUSIVO DO ADM APARECE AQUI */}
+                {userRole === 'admin' && (
+                    <button 
+                        onClick={() => window.location.href = '/admin/oficinas'}
+                        className="bg-lime-500 hover:bg-lime-600 text-black font-semibold px-4 py-2 rounded-lg transition-all flex items-center gap-2"
+                    >
+                        🔧 Painel de Oficinas ADM
+                    </button>
+                )}
+            </div>
+
+            {/* O restante do seu código da garagem (Lista de motos, etc) continua aqui igualzinho... */}
+        </div>
+    );
+}
 "use client";
 
 import { useEffect, useState } from "react";
