@@ -62,11 +62,24 @@ export default function Garagem() {
     const token = localStorage.getItem("token");
     if (!token) { router.push("/"); return; }
 
-    // Pega as informações do usuário assim que a tela carrega
-    const role = localStorage.getItem('userRole');
-    const name = localStorage.getItem('userName');
-    if (role) setUserRole(role);
-    if (name) setUserName(name);
+    // Pegamos o objeto de usuário completo salvo no login
+    const userString = localStorage.getItem('user');
+    
+    if (userString) {
+      try {
+        const userData = JSON.parse(userString);
+        if (userData.role) setUserRole(userData.role);
+        if (userData.nome) setUserName(userData.nome);
+      } catch (e) {
+        console.error("Erro ao ler dados do usuário do localStorage");
+      }
+    } else {
+        // Fallback caso estejam salvos separadamente
+        const role = localStorage.getItem('role') || localStorage.getItem('userRole');
+        const nome = localStorage.getItem('nome') || localStorage.getItem('userName');
+        if (role) setUserRole(role);
+        if (nome) setUserName(nome);
+    }
 
     buscarMotos();
   }, [router]);
@@ -94,6 +107,9 @@ export default function Garagem() {
 
   const handleSair = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("role");
+    localStorage.removeItem("nome");
     localStorage.removeItem("userRole");
     localStorage.removeItem("userName");
     router.push("/");
