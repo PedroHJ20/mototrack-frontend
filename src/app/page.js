@@ -29,8 +29,6 @@ export default function Home() {
     setSucesso("");
     setCarregando(true);
 
-    // 💡 URL oficial do Render atualizada aqui:
-    // Nota: Verifique se a sua rota de cadastro no Back-end é "/usuarios" ou "/usuarios/registrar"
     const endpoint = isLogin ? "/auth/login" : "/auth/signup";
     const url = `https://mototrack-backend-giad.onrender.com${endpoint}`;
 
@@ -47,10 +45,13 @@ export default function Home() {
 
       if (resposta.ok) {
         if (isLogin) {
-          // Login com sucesso: guarda o token e vai para a garagem
+          // Login com sucesso: limpa sujeiras antigas e guarda tudo estruturado
+          localStorage.clear(); 
           localStorage.setItem("token", dados.token);
-          localStorage.setItem('userRole', dados.user.role); 
-          localStorage.setItem('userName', dados.user.nome);
+          localStorage.setItem("user", JSON.stringify(dados.user)); // Guarda o objeto inteiro
+          localStorage.setItem('userRole', dados.user.role || 'user'); 
+          localStorage.setItem('userName', dados.user.nome || 'Piloto');
+          
           router.push("/garagem");
         } else {
           // Cadastro com sucesso: limpa o formulário e volta para a tela de login
