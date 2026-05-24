@@ -3,145 +3,91 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function OficinasAdmin() {
-    const router = useRouter();
-    const [oficinas, setOficinas] = useState([]);
-    const [nome, setNome] = useState('');
-    const [endereco, setEndereco] = useState('');
-    const [especialidade, setEspecialidade] = useState('');
-    const [erro, setErro] = useState('');
+export default function AdminOficinas() {
+  const router = useRouter();
+  const [oficinas, setOficinas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [userName, setUserName] = useState('');
 
-    // A URL da sua API no Render (substitua pela sua URL real se estiver diferente)
-    const API_URL = "https://mototrack-backend-giad.onrender.com/oficinas";
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole");
+    const name = localStorage.getItem("userName");
 
-    useEffect(() => {
-        const role = localStorage.getItem('userRole');
-        if (role !== 'admin') {
-            router.push('/garagem'); // Se não for admin, expulsa de volta para a garagem
-        } else {
-            carregarOficinas();
-        }
-    }, []);
+    // Segurança: Se não for admin, chuta de volta para a garagem
+    if (!token || role !== 'admin') {
+      router.push("/garagem");
+      return;
+    }
+    
+    if (name) setUserName(name);
 
-    const carregarOficinas = async () => {
-        const token = localStorage.getItem('token');
-        try {
-            const res = await fetch(API_URL, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            if (res.ok) setOficinas(data);
-        } catch (error) {
-            console.error("Erro ao carregar oficinas", error);
-        }
-    };
+    // Busca as oficinas fictícias (ou reais do seu back-end)
+    buscarOficinas();
+  }, [router]);
 
-    const cadastrarOficina = async (e) => {
-        e.preventDefault();
-        setErro('');
-        const token = localStorage.getItem('token');
+  const buscarOficinas = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const resposta = await fetch("https://mototrack-backend-giad.onrender.com/oficinas", {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      if (resposta.ok) {
+        const dados = await resposta.json();
+        setOficinas(dados.oficinas || []);
+      }
+    } catch (error) {
+      console.log("Erro ao buscar oficinas");
+    } finally {
+      setCarregando(false);
+    }
+  };
 
-        try {
-            const res = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ nome, endereco, especialidade })
-            });
+  if (carregando) {
+    return <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-zinc-400">Verificando credenciais de Administrador...</div>;
+  }
 
-            if (res.ok) {
-                setNome(''); setEndereco(''); setEspecialidade('');
-                carregarOficinas(); // Recarrega a lista
-            } else {
-                const data = await res.json();
-                setErro(data.message || 'Erro ao cadastrar.');
-            }
-        } catch (error) {
-            setErro('Erro de conexão com a API.');
-        }
-    };
-
-    const deletarOficina = async (id) => {
-        if (!confirm("Tem a certeza que deseja remover esta oficina?")) return;
-        const token = localStorage.getItem('token');
-
-        try {
-            const res = await fetch(`${API_URL}/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) carregarOficinas();
-        } catch (error) {
-            console.error("Erro ao deletar", error);
-        }
-    };
-
-    return (
-        <div className="min-h-screen bg-zinc-950 text-white p-8">
-            <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
-                <h1 className="text-3xl font-bold text-lime-500">Painel do Administrador - Oficinas</h1>
-                <button onClick={() => router.push('/garagem')} className="text-zinc-400 hover:text-white">
-                    Voltar para Garagem
-                </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                {/* Formulário de Cadastro */}
-                <div className="bg-zinc-900 p-6 rounded-lg border border-zinc-800 h-fit">
-                    <h2 className="text-xl font-semibold mb-4">Nova Oficina</h2>
-                    {erro && <p className="text-red-500 text-sm mb-4">{erro}</p>}
-                    
-                    <form onSubmit={cadastrarOficina} className="flex flex-col gap-4">
-                        <input 
-                            type="text" placeholder="Nome da Oficina" required
-                            value={nome} onChange={(e) => setNome(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-3 rounded text-white"
-                        />
-                        <input 
-                            type="text" placeholder="Endereço" required
-                            value={endereco} onChange={(e) => setEndereco(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-3 rounded text-white"
-                        />
-                        <input 
-                            type="text" placeholder="Especialidade (ex: Elétrica)" required
-                            value={especialidade} onChange={(e) => setEspecialidade(e.target.value)}
-                            className="bg-zinc-950 border border-zinc-800 p-3 rounded text-white"
-                        />
-                        <button type="submit" className="bg-lime-500 hover:bg-lime-600 text-black font-bold p-3 rounded mt-2">
-                            Cadastrar Rede
-                        </button>
-                    </form>
-                </div>
-
-                {/* Lista de Oficinas */}
-                <div className="md:col-span-2">
-                    <h2 className="text-xl font-semibold mb-4">Rede Credenciada</h2>
-                    <div className="grid gap-4">
-                        {oficinas.map(oficina => (
-                            <div key={oficina.id} className="bg-zinc-900 p-4 rounded-lg border border-zinc-800 flex justify-between items-center">
-                                <div>
-                                    <h3 className="font-bold text-lg text-lime-400">{oficina.nome}</h3>
-                                    <p className="text-zinc-400 text-sm">{oficina.endereco}</p>
-                                    <span className="inline-block mt-2 bg-zinc-800 px-2 py-1 rounded text-xs text-zinc-300">
-                                        {oficina.especialidade}
-                                    </span>
-                                </div>
-                                <button 
-                                    onClick={() => deletarOficina(oficina.id)}
-                                    className="text-red-500 hover:bg-red-500/10 p-2 rounded"
-                                >
-                                    Remover
-                                </button>
-                            </div>
-                        ))}
-                        {oficinas.length === 0 && (
-                            <p className="text-zinc-500">Nenhuma oficina cadastrada no sistema.</p>
-                        )}
-                    </div>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-zinc-950 p-6 text-white">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Cabeçalho do Admin */}
+        <div className="flex justify-between items-center bg-zinc-900 p-6 rounded-xl border-l-4 border-lime-500 shadow-lg">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-lime-500">Painel Administrativo</h1>
+            <p className="text-zinc-400 text-sm mt-1">Gestão Global - Operador: {userName}</p>
+          </div>
+          <button onClick={() => router.push("/garagem")} className="bg-zinc-800 hover:bg-zinc-700 text-white py-2 px-4 rounded-lg text-sm transition-colors">
+            Voltar à Garagem
+          </button>
         </div>
-    );
+
+        {/* Gestão de Oficinas */}
+        <div className="bg-zinc-900 rounded-xl border border-zinc-800 p-6 shadow-lg">
+          <div className="flex justify-between items-center mb-6 border-b border-zinc-800 pb-4">
+            <h2 className="text-lg font-semibold">Oficinas Parceiras Credenciadas</h2>
+            <button className="bg-lime-600 hover:bg-lime-700 text-black font-bold py-2 px-4 rounded-lg transition-colors text-sm shadow-lg shadow-lime-500/20">
+              + Cadastrar Oficina
+            </button>
+          </div>
+
+          {oficinas.length === 0 ? (
+            <div className="text-center py-12 border-2 border-dashed border-zinc-800 rounded-xl text-zinc-500">
+              Nenhuma oficina credenciada na plataforma ainda.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {oficinas.map((oficina, i) => (
+                <div key={i} className="p-4 bg-zinc-950 border border-zinc-800 rounded-lg">
+                  <h3 className="font-bold text-zinc-200">{oficina.nome}</h3>
+                  <p className="text-sm text-zinc-400">CNPJ: {oficina.cnpj}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
 }
